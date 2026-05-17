@@ -49,6 +49,8 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [processedCount, setProcessedCount] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [activeNav, setActiveNav] = useState<'dashboard' | 'analytics' | 'campaigns'>('dashboard');
+  const [auditSlide, setAuditSlide] = useState(0);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -144,15 +146,32 @@ export default function App() {
           <span className="text-xl font-bold tracking-tight text-white">ProspectPilot</span>
         </div>
         <div className="flex items-center gap-6 text-sm font-medium">
-          <span className="text-indigo-400 cursor-pointer hidden sm:block">Dashboard</span>
-          <span className="text-slate-500 cursor-pointer hover:text-slate-300 transition-colors hidden sm:block">Analytics</span>
-          <span className="text-slate-500 cursor-pointer hover:text-slate-300 transition-colors hidden sm:block">Campaigns</span>
+          <span 
+            onClick={() => setActiveNav('dashboard')}
+            className={`cursor-pointer hidden sm:block transition-colors ${activeNav === 'dashboard' ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            Dashboard
+          </span>
+          <span 
+            onClick={() => setActiveNav('analytics')}
+            className={`cursor-pointer hidden sm:block transition-colors ${activeNav === 'analytics' ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            Analytics
+          </span>
+          <span 
+            onClick={() => setActiveNav('campaigns')}
+            className={`cursor-pointer hidden sm:block transition-colors ${activeNav === 'campaigns' ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            Campaigns
+          </span>
           <div className="h-8 w-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[10px] font-bold text-slate-500">AP</div>
         </div>
       </nav>
 
       <div className="flex flex-1 overflow-hidden p-4 gap-4">
-        {/* Left Sidebar */}
+        {activeNav === 'dashboard' ? (
+          <>
+            {/* Left Sidebar */}
         <aside className="w-80 flex flex-col gap-4 shrink-0 overflow-y-auto pb-4">
           <section className="bg-slate-900/80 border border-white/5 rounded-2xl p-4 shadow-xl">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1">Search Parameters</h3>
@@ -216,7 +235,10 @@ export default function App() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.03 }}
-                    onClick={() => setSelectedIdx(idx)}
+                    onClick={() => {
+                      setSelectedIdx(idx);
+                      setAuditSlide(0);
+                    }}
                     className={`p-3 rounded-xl cursor-pointer transition-all border group ${
                       selectedIdx === idx 
                         ? 'bg-slate-800 border-indigo-500/50 ring-1 ring-indigo-500/20 shadow-lg' 
@@ -409,27 +431,63 @@ export default function App() {
               >
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">Website Audit Logs</h3>
-                  <div className="flex gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                  </div>
+                  {selectedLead.audit && (
+                    <div className="flex gap-1.5">
+                      {selectedLead.audit.findings.split('.').filter(f => f.trim().length > 0).map((_, i) => (
+                        <button 
+                          key={i}
+                          onClick={() => setAuditSlide(i)}
+                          className={`w-2 h-2 rounded-full transition-all ${auditSlide === i ? 'bg-indigo-500 w-4' : 'bg-slate-800'}`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex-1 space-y-6">
+                <div className="flex-1 overflow-hidden relative">
                   {selectedLead.audit ? (
-                    <div className="space-y-4">
-                      {selectedLead.audit.findings.split('.').filter(f => f.trim().length > 0).map((finding, fidx) => (
-                        <div key={fidx} className="flex gap-4 items-start bg-slate-800/20 p-4 rounded-2xl border border-white/5">
-                          <span className={`mt-0.5 text-lg ${fidx === 0 ? 'text-rose-500' : 'text-amber-500'}`}>
-                            {fidx === 0 ? '×' : '⚠'}
-                          </span>
-                          <p className="text-sm text-slate-400 leading-relaxed font-medium">{finding.trim()}.</p>
+                    <div className="h-full">
+                      <AnimatePresence mode="wait">
+                        {selectedLead.audit.findings.split('.').filter(f => f.trim().length > 0).map((finding, fidx) => (
+                          fidx === auditSlide && (
+                            <motion.div 
+                              key={fidx}
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="h-full flex flex-col justify-center"
+                            >
+                              <div className="bg-slate-800/20 p-8 rounded-3xl border border-white/5 space-y-6">
+                                <span className={`text-4xl ${fidx === 0 ? 'text-rose-500' : 'text-amber-500'}`}>
+                                  {fidx === 0 ? '×' : '⚠'}
+                                </span>
+                                <p className="text-xl text-slate-300 leading-relaxed font-semibold italic">
+                                  "{finding.trim()}."
+                                </p>
+                                <div className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                   <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                                   Impact: High conversion bottleneck
+                                </div>
+                              </div>
+                            </motion.div>
+                          )
+                        ))}
+                      </AnimatePresence>
+                      
+                      <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest pt-4 border-t border-white/5">
+                        <span>Observation {auditSlide + 1}</span>
+                        <div className="flex gap-4">
+                          <button 
+                            disabled={auditSlide === 0}
+                            onClick={() => setAuditSlide(s => s - 1)}
+                            className="hover:text-white disabled:opacity-20"
+                          >Prev</button>
+                          <button 
+                            disabled={auditSlide === selectedLead.audit.findings.split('.').filter(f => f.trim().length > 0).length - 1}
+                            onClick={() => setAuditSlide(s => s + 1)}
+                            className="hover:text-white disabled:opacity-20"
+                          >Next</button>
                         </div>
-                      ))}
-                      <div className="flex gap-4 items-start bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-                        <span className="mt-0.5 text-emerald-500 text-lg">✓</span>
-                        <p className="text-sm text-emerald-400/80 leading-relaxed font-medium lowercase italic">Competitive benchmarking complete for {city} metro area.</p>
                       </div>
                     </div>
                   ) : (
@@ -498,6 +556,43 @@ export default function App() {
             </div>
           )}
         </main>
+      </>
+        ) : activeNav === 'analytics' ? (
+          <div className="flex-1 flex flex-col items-center justify-center bg-slate-900 border border-white/5 rounded-3xl p-12 text-center gap-6 shadow-2xl">
+            <div className="w-20 h-20 bg-indigo-600/10 rounded-full flex items-center justify-center border border-indigo-500/20 shadow-xl">
+              <RefreshCw className="w-8 h-8 text-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-white uppercase tracking-widest">Global Analytics</h2>
+              <p className="text-slate-500 max-w-sm">Aggregating conversion data from all processed leads. This module will integrate with your SMTP/G-Workspace logs.</p>
+            </div>
+            <div className="grid grid-cols-3 gap-6 w-full max-w-2xl mt-8">
+               {[
+                 { label: 'Total Scraped', val: '1,280' },
+                 { label: 'Emails Found', val: '840' },
+                 { label: 'Audit Avg', val: '62%' }
+               ].map(stat => (
+                 <div key={stat.label} className="bg-slate-950 p-6 rounded-2xl border border-white/5">
+                    <div className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-1">{stat.label}</div>
+                    <div className="text-2xl font-black text-white">{stat.val}</div>
+                 </div>
+               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center bg-slate-900 border border-white/5 rounded-3xl p-12 text-center gap-6 shadow-2xl">
+            <div className="w-20 h-20 bg-emerald-600/10 rounded-full flex items-center justify-center border border-emerald-500/20 shadow-xl">
+              <Mail className="w-8 h-8 text-emerald-400" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-white uppercase tracking-widest">Campaign Manager</h2>
+              <p className="text-slate-500 max-w-sm">Schedule and track cold email sequences. Connect your email provider to launch the drafts generated in the dashboard.</p>
+            </div>
+            <div className="mt-8 px-8 py-3 bg-white text-slate-950 font-black rounded-xl uppercase tracking-widest text-xs cursor-pointer hover:bg-slate-200 transition-all">
+               Connect SMTP Provider
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -110,18 +110,18 @@ export const US_CITIES = [
 export const NICHE_CATEGORIES: Record<string, string> = {
   "Dentist": "healthcare.dentist",
   "Restaurant": "catering.restaurant",
-  "Lawyer": "service.financial,service.financial.lawyer,office",
-  "Gym": "leisure.sport,leisure.sport.fitness",
-  "Plumber": "service.construction,service.construction.plumbing",
-  "Electrician": "service.construction,service.construction.electrical",
-  "HVAC": "service.construction,service.construction.hvac",
-  "Roofer": "service.construction,service.construction.roofing",
-  "Real Estate": "service.real_estate",
-  "Pet Care": "service.animal,service.animal.veterinary",
-  "Auto Repair": "service.vehicle,service.vehicle.repair",
+  "Lawyer": "office",
+  "Gym": "leisure.sport.fitness",
+  "Plumber": "commercial.trade",
+  "Electrician": "commercial.trade",
+  "HVAC": "commercial.trade",
+  "Roofer": "commercial.trade",
+  "Real Estate": "commercial",
+  "Pet Care": "commercial",
+  "Auto Repair": "commercial.vehicle",
   "Daycare": "childcare",
-  "Cleaning Service": "service.cleaning",
-  "Spa & Salon": "healthcare.health_and_beauty,healthcare.health_and_beauty.spa,healthcare.health_and_beauty.hairdresser"
+  "Cleaning Service": "commercial.trade",
+  "Spa & Salon": "commercial"
 };
 
 export const NICHES = Object.keys(NICHE_CATEGORIES);
