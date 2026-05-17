@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY || "",
   httpOptions: {
     headers: {
       'User-Agent': 'aistudio-build',
@@ -25,11 +25,12 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
 
   // --- API Routes ---
+  const apiRouter = express.Router();
 
   /**
    * Search Leads via Geoapify
    */
-  app.post("/api/search-leads", async (req, res) => {
+  apiRouter.post("/search-leads", async (req, res) => {
     const { niche, city, state, geoapifyKey } = req.body;
     const apiKey = geoapifyKey || process.env.GEOAPIFY_API_KEY;
 
@@ -82,7 +83,7 @@ async function startServer() {
   /**
    * Process Single Lead
    */
-  app.post("/api/process-lead", async (req, res) => {
+  apiRouter.post("/process-lead", async (req, res) => {
     const { website, name, niche } = req.body;
     
     try {
@@ -116,17 +117,16 @@ async function startServer() {
 
         const visionResponse = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
-          contents: {
+          contents: [{
             parts: [
               { text: visionPrompt },
               { inlineData: { mimeType: "image/png", data: screenshotBase64 } }
             ]
-          }
+          }]
         });
 
         const text = visionResponse.text || "";
         try {
-          // Clean up potential markdown formatting if Gemini returns it
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           auditResult = JSON.parse(jsonMatch ? jsonMatch[0] : text);
         } catch (e) {
@@ -151,7 +151,7 @@ async function startServer() {
 
       const emailResponse = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: { parts: [{ text: emailPrompt }] }
+        contents: [{ parts: [{ text: emailPrompt }] }]
       });
       const emailText = emailResponse.text || "";
       let emailDraft = { subject: "", body: "" };
@@ -173,6 +173,11 @@ async function startServer() {
       res.status(500).json({ error: `Process Error: ${error.message}` });
     }
   });
+
+  app.use("/api", apiRouter);
+  app.use("/.netlify/functions/server/api", apiRouter);
+  app.use("/.netlify/functions/server", apiRouter);
+
 
   // --- Helper Functions ---
 

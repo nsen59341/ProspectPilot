@@ -111,7 +111,7 @@ export const NICHE_CATEGORIES: Record<string, string> = {
   "Dentist": "healthcare.dentist",
   "Restaurant": "catering.restaurant",
   "Lawyer": "office",
-  "Gym": "leisure.sport.fitness",
+  "Gym": "activity.sport_club",
   "Plumber": "commercial.trade",
   "Electrician": "commercial.trade",
   "HVAC": "commercial.trade",
