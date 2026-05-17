@@ -116,10 +116,12 @@ async function startServer() {
 
         const visionResponse = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
-          contents: [
-            { text: visionPrompt },
-            { inlineData: { mimeType: "image/png", data: screenshotBase64 } }
-          ]
+          contents: {
+            parts: [
+              { text: visionPrompt },
+              { inlineData: { mimeType: "image/png", data: screenshotBase64 } }
+            ]
+          }
         });
 
         const text = visionResponse.text || "";
@@ -149,7 +151,7 @@ async function startServer() {
 
       const emailResponse = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: emailPrompt
+        contents: { parts: [{ text: emailPrompt }] }
       });
       const emailText = emailResponse.text || "";
       let emailDraft = { subject: "", body: "" };
@@ -167,8 +169,8 @@ async function startServer() {
         screenshot: screenshotUrl
       });
     } catch (error: any) {
-      console.error("Process Error:", error.message);
-      res.status(500).json({ error: "Failed to process lead." });
+      console.error("Process Error:", error.message, error.response?.data);
+      res.status(500).json({ error: `Process Error: ${error.message}` });
     }
   });
 
