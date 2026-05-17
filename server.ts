@@ -26,6 +26,22 @@ app.use(express.json({ limit: '10mb' }));
 // --- API Router ---
 const apiRouter = express.Router();
 
+// Health check for debugging
+apiRouter.get("/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    env: { 
+      hasGemini: !!process.env.GEMINI_API_KEY, 
+      hasGeo: !!process.env.GEOAPIFY_API_KEY 
+    },
+    context: {
+      url: req.url,
+      path: req.path,
+      baseUrl: req.baseUrl
+    }
+  });
+});
+
 /**
  * Search Leads via Geoapify
  */
@@ -247,9 +263,23 @@ function joinUrl(base: string, path: string) {
 }
 
 
-// For Netlify Functions path compatibility
+// Register API routes
 app.use("/api", apiRouter);
-app.use(apiRouter);
+app.use("/.netlify/functions/server/api", apiRouter);
+app.use("/.netlify/functions/server", apiRouter);
+
+// Catch-all for API router to debug
+apiRouter.use((req, res, next) => {
+  // Only handle paths that look like API calls
+  if (req.path === '/' || req.path.includes('.')) {
+    return next();
+  }
+  console.log(`API Router 404: ${req.method} ${req.path}`);
+  res.status(404).json({ 
+    error: `API route not found: ${req.method} ${req.path}`,
+    suggestion: "Check if the route is defined in server.ts"
+  });
+});
 
 // --- Vite & Static Handling ---
 async function setupVite() {
@@ -280,7 +310,5 @@ setupVite().then(() => {
   }
 });
 
-export const handler = serverless(app, {
-  basePath: '/.netlify/functions/server'
-});
+export const handler = serverless(app);
 
